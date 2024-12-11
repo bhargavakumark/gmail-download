@@ -22,4 +22,17 @@ Gmail API access is bound to a google cloud project. You can use any existing go
 6. Downlaod the credentials and save as `credentials.json`
 
 
+## Gmail Token
+
+When you run the program first time, it prompts you to authorize access:
+
+```
+Go to the following link in your browser then type the authorization code:`
+```
+
+If you're not already signed in to your Google Account, sign in when prompted. If you're signed in to multiple accounts, select one account to use for authorization.
+
+Once authorizaiton you will be redirected to a URL like `http://localhost` whith will fail with 404 not found.
+
+The code you need to copy/paste into your terminal is in the URL. \&code=<long-code-is-here-copy-this>=https://. Copy this code and paste as input to the this program. It will save the token as `token.json` locally. Next time you run the program, you aren't prompted for authorization.
 

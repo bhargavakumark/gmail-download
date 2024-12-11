@@ -173,34 +173,6 @@ func main() {
 		log.Fatalf("unable to parse client secret file to config: %v", err)
 	}
 
-	/*
-		// Setting up the config manually. You can also retrieve a config from a file, e.g.
-		// config, err := google.ConfigFromJSON(b, gmail.GmailReadonlyScope)
-		// where b corresponds to the contents of the client credentials file.
-		config = &oauth2.Config{
-			ClientID:     os.Getenv("CLIENT_ID"),
-			ClientSecret: os.Getenv("CLIENT_SECRET"),
-			Endpoint:     google.Endpoint,
-			RedirectURL:  "http://localhost", // Not required once you have a token
-			Scopes:       []string{gmail.GmailReadonlyScope},
-		}
-	*/
-
-	// Retrieving a token for first time and saving it.
-	// Required if you don't have a token, or it's expired.
-	// saveToken(getTokenFromWeb(ctx, config))
-
-	// Setting up the token manually. You can also retrieve a token from a file, e.g.
-	// token := tokenFromFile()
-	/*
-		token := &oauth2.Token{
-			AccessToken:  os.Getenv("ACCESS_TOKEN"),
-			TokenType:    "Bearer",
-			RefreshToken: os.Getenv("REFRESH_TOKEN"),
-			Expiry:       time.Date(2023, time.March, 27, 15, 5, 14, 0, time.UTC),
-		}
-	*/
-
 	client := getClient(config)
 
 	// Creating the gmail service.
