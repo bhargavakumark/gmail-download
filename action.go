@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -61,19 +62,18 @@ func processEmails(service *gmail.Service, userID string, labelAction LabelActio
 
 						dir := action.SaveTo
 						if dir == "" {
-							dir = "."
+							log.Fatalf("SaveTo directory is empty for action: %+v", action)
+						}
+						if _, err := os.Stat(dir); os.IsNotExist(err) {
+							log.Fatalf("SaveTo directory does not exist: %s", dir)
 						}
 
 						filePath := fmt.Sprintf("%s/%s", dir, part.Filename)
-						if err := os.MkdirAll(dir, 0o755); err != nil {
-							log.Printf("Failed to create directory %s: %v", dir, err)
+						if err := os.WriteFile(filePath, data, 0644); err != nil {
+							log.Printf("Failed to save attachment: %v", err)
 							continue
 						}
-						if err := os.WriteFile(filePath, data, 0o644); err != nil {
-							log.Printf("Failed to save attachment: %v", err)
-						} else {
-							log.Printf("Saved attachment: %s", filePath)
-						}
+						log.Printf("Saved attachment: %s", filePath)
 					}
 				}
 
@@ -87,6 +87,7 @@ func processEmails(service *gmail.Service, userID string, labelAction LabelActio
 				}
 
 				if action.Delete {
+					log.Printf("Deleting email with ID: %s", msg.Id)
 					if err := service.Users.Messages.Delete(userID, msg.Id).Do(); err != nil {
 						log.Printf("Failed to delete email: %v", err)
 					}
