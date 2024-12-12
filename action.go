@@ -9,7 +9,21 @@ import (
 	"google.golang.org/api/gmail/v1"
 )
 
+type Action struct {
+	SubjectFilter string `json:"subject_filter"`
+	Download      bool   `json:"download_attachment"`
+	MarkAsRead    bool   `json:"mark_as_read"`
+	Delete        bool   `json:"delete_email"`
+	SaveTo        string `json:"save_to"`
+}
+
+type LabelAction struct {
+	Label   string   `json:"label"`
+	Actions []Action `json:"actions"`
+}
+
 func processEmails(service *gmail.Service, userID string, labelAction LabelAction) {
+	log.Printf("Processing label: %s", labelAction.Label)
 	for _, action := range labelAction.Actions {
 		query := fmt.Sprintf("label:%s subject:%s", labelAction.Label, action.SubjectFilter)
 		nextPageToken := ""
@@ -20,9 +34,7 @@ func processEmails(service *gmail.Service, userID string, labelAction LabelActio
 				break
 			}
 
-			log.Printf("Processing messages for label %s...\n", labelAction.Label)
 			for _, msg := range msgs.Messages {
-				log.Printf("Processing msg %s...\n", msg.Id)
 				m, err := service.Users.Messages.Get(userID, msg.Id).Do()
 				if err != nil {
 					log.Printf("Unable to retrieve message: %v", err)
@@ -31,33 +43,36 @@ func processEmails(service *gmail.Service, userID string, labelAction LabelActio
 
 				if action.Download {
 					for _, part := range m.Payload.Parts {
-						if part.Filename != "" && part.Body.AttachmentId != "" {
-							attachment, err := service.Users.Messages.Attachments.Get(userID, msg.Id, part.Body.AttachmentId).Do()
-							if err != nil {
-								log.Printf("Unable to retrieve attachment: %v", err)
-								continue
-							}
+						if part.Filename == "" || part.Body.AttachmentId == "" {
+							continue
+						}
 
-							data, err := base64.URLEncoding.DecodeString(attachment.Data)
-							if err != nil {
-								log.Printf("Failed to decode attachment data: %v", err)
-								continue
-							}
+						attachment, err := service.Users.Messages.Attachments.Get(userID, msg.Id, part.Body.AttachmentId).Do()
+						if err != nil {
+							log.Printf("Unable to retrieve attachment: %v", err)
+							continue
+						}
 
-							dir := action.SaveTo
-							if dir == "" {
-								dir = "."
-							}
-							filePath := fmt.Sprintf("%s/%s", dir, part.Filename)
-							if err := os.MkdirAll(dir, 0o755); err != nil {
-								log.Printf("Failed to create directory %s: %v", dir, err)
-								continue
-							}
-							if err := os.WriteFile(filePath, data, 0o644); err != nil {
-								log.Printf("Failed to save attachment: %v", err)
-							} else {
-								log.Printf("Saved attachment: %s", filePath)
-							}
+						data, err := base64.URLEncoding.DecodeString(attachment.Data)
+						if err != nil {
+							log.Printf("Failed to decode attachment data: %v", err)
+							continue
+						}
+
+						dir := action.SaveTo
+						if dir == "" {
+							dir = "."
+						}
+
+						filePath := fmt.Sprintf("%s/%s", dir, part.Filename)
+						if err := os.MkdirAll(dir, 0o755); err != nil {
+							log.Printf("Failed to create directory %s: %v", dir, err)
+							continue
+						}
+						if err := os.WriteFile(filePath, data, 0o644); err != nil {
+							log.Printf("Failed to save attachment: %v", err)
+						} else {
+							log.Printf("Saved attachment: %s", filePath)
 						}
 					}
 				}

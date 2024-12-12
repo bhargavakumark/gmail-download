@@ -11,19 +11,6 @@ import (
 	"google.golang.org/api/option"
 )
 
-type Action struct {
-	SubjectFilter string `json:"subject_filter"`
-	Download      bool   `json:"download_attachment"`
-	MarkAsRead    bool   `json:"mark_as_read"`
-	Delete        bool   `json:"delete_email"`
-	SaveTo        string `json:"save_to"`
-}
-
-type LabelAction struct {
-	Label   string   `json:"label"`
-	Actions []Action `json:"actions"`
-}
-
 type Config struct {
 	LabelActions []LabelAction `json:"label_actions"`
 }
