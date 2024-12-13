@@ -1,12 +1,13 @@
 package main
 
 import (
-	"context"
 	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
 	"google.golang.org/api/gmail/v1"
 )
 
@@ -16,6 +17,7 @@ type Action struct {
 	MarkAsRead    bool   `json:"mark_as_read"`
 	Delete        bool   `json:"delete_email"`
 	SaveTo        string `json:"save_to"`
+	PdfPassword   string `json:"pdf_password"`
 }
 
 type LabelAction struct {
@@ -74,6 +76,17 @@ func processEmails(service *gmail.Service, userID string, labelAction LabelActio
 							continue
 						}
 						log.Printf("Saved attachment: %s", filePath)
+
+						if action.PdfPassword != "" && part.Filename[len(part.Filename)-4:] == ".pdf" {
+							c := model.NewDefaultConfiguration()
+							c.UserPW = action.PdfPassword
+							c.Cmd = model.DECRYPT
+							err := api.DecryptFile(filePath, filePath, c)
+							if err != nil {
+								log.Fatalf("Failed to decrypt PDF file %s: %v", filePath, err)
+							}
+							log.Printf("Successfully decrypted PDF: %s", filePath)
+						}
 					}
 				}
 
