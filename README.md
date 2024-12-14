@@ -10,6 +10,7 @@ A simple program to download emails from gmail and save them to local folder. An
 
 - **Filter Emails by Label and Subject**: Process emails based on specific Gmail labels and subject filters.
 - **Download Attachments**: Save email attachments to a specified directory.
+- **Filter Attachments by Name**: Download attachments only if their filenames match specified patterns (e.g., files ending with .pdf).
 - **Save Emails as PDFs**: Save email content as PDF files with unique filenames.
 - **Mark Emails as Read**: Automatically mark processed emails as read.
 - **Delete Emails**: Remove emails from the inbox.
@@ -108,6 +109,7 @@ Create a JSON configuration file (e.g., config.json) to define actions for speci
 * **label**: Gmail label to filter emails (e.g., "INBOX" or custom labels).
 * **subject_filter**: A string to filter emails by subject.
 * **download_attachment**: Whether to download attachments (true/false).
+* **attachment_name_filter**: A regex pattern to filter attachments by their filenames (e.g., `"\.pdf$"` for files ending with `.pdf`).
 * **mark_as_read**: Mark the email as read after processing (true/false).
 * **delete_email**: Delete the email after processing (true/false).
 * **save_to**: Directory to save downloaded files or PDFs.

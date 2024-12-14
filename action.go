@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,14 +16,15 @@ import (
 )
 
 type Action struct {
-	SubjectFilter   string `json:"subject_filter"`
-	Download        bool   `json:"download_attachment"`
-	MarkAsRead      bool   `json:"mark_as_read"`
-	Delete          bool   `json:"delete_email"`
-	SaveTo          string `json:"save_to"`
-	PdfPassword     string `json:"pdf_password"`
-	FilenamePattern string `json:"filename_pattern"`
-	SaveAsPdf       bool   `json:"save_as_pdf"`
+	SubjectFilter        string `json:"subject_filter"`
+	Download             bool   `json:"download_attachment"`
+	MarkAsRead           bool   `json:"mark_as_read"`
+	Delete               bool   `json:"delete_email"`
+	SaveTo               string `json:"save_to"`
+	PdfPassword          string `json:"pdf_password"`
+	FilenamePattern      string `json:"filename_pattern"`
+	SaveAsPdf            bool   `json:"save_as_pdf"`
+	AttachmentNameFilter string `json:"attachment_name_filter"`
 }
 
 type LabelAction struct {
@@ -118,6 +120,17 @@ func processEmails(service *gmail.Service, userID string, labelAction LabelActio
 					for _, part := range m.Payload.Parts {
 						if part.Filename == "" || part.Body.AttachmentId == "" {
 							continue
+						}
+
+						if action.AttachmentNameFilter != "" {
+							matched, err := regexp.MatchString(action.AttachmentNameFilter, part.Filename)
+							if err != nil {
+								log.Printf("ERROR: Invalid regex pattern for attachment name filter: %v", err)
+								continue
+							}
+							if !matched {
+								continue
+							}
 						}
 
 						attachment, err := service.Users.Messages.Attachments.Get(userID, msg.Id, part.Body.AttachmentId).Do()
