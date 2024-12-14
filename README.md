@@ -1,8 +1,26 @@
-# gmail-download
+# Gmail Automation Tool
+
+## Overview
+
+This tool automates various tasks for Gmail accounts using the Gmail API. It allows users to configure actions for specific email labels, such as downloading attachments, marking emails as read, saving emails as PDFs, or deleting emails. The configuration is defined via a JSON file, enabling flexibility and customization.
 
 A simple program to download emails from gmail and save them to local folder. And optionally delete them from gmail
 
-## Google cloud project and API credentials
+## Features
+
+- **Filter Emails by Label and Subject**: Process emails based on specific Gmail labels and subject filters.
+- **Download Attachments**: Save email attachments to a specified directory.
+- **Save Emails as PDFs**: Save email content as PDF files with unique filenames.
+- **Mark Emails as Read**: Automatically mark processed emails as read.
+- **Delete Emails**: Remove emails from the inbox.
+- **Secure PDF Processing**: Decrypt PDFs using a provided password.
+- **Customizable Filename Patterns**: Rename downloaded files based on email date and a configurable pattern.a
+
+## Prerequisites
+
+Go Environment: Ensure Go is installed and configured.
+
+### Google cloud project and API credentials
 
 Gmail API access is bound to a google cloud project. You can use any existing google cloud project tied to your gmail.com address, or create a new project. 
 
@@ -22,7 +40,7 @@ Gmail API access is bound to a google cloud project. You can use any existing go
 6. Downlaod the credentials and save as `credentials.json`
 
 
-## Gmail Token
+### Gmail Token
 
 When you run the program first time, it prompts you to authorize access:
 
@@ -37,3 +55,87 @@ Once authorizaiton you will be redirected to a URL like `http://localhost` whith
 The code you need to copy/paste into your terminal is in the URL. \&code=<long-code-is-here-copy-this>=https://. Copy this code and paste as input to the this program. It will save the token as `token.json` locally. Next time you run the program, you aren't prompted for authorization.
 
 Note: The authentication scope required for doing changes to gmail requires app to be verified as per https://developers.google.com/gmail/api/auth/scopes#scopes.
+
+### Environment Variables:
+
+* `GMAIL_CREDENTIALS_JSON`: Path to the credentials.json file.
+* `GMAIL_USER`: Gmail user ID (usually your email address).
+* `GMAIL_ACTION_CONFIG`: Path to the JSON configuration file.
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone <repository-url>
+cd <repository-directory>
+```
+
+Build the executable:
+
+```bash
+go build -o gmail-tool main.go
+```
+
+## Configuration
+
+Create a JSON configuration file (e.g., config.json) to define actions for specific labels. Here's an example:
+
+```
+{
+  "label_actions": [
+    {
+      "label": "INBOX",
+      "actions": [
+        {
+          "subject_filter": "Invoice",
+          "download_attachment": true,
+          "mark_as_read": true,
+          "delete_email": false,
+          "save_to": "/path/to/save",
+          "pdf_password": "yourpassword",
+          "filename_pattern": "attachment_{{date}}_{{email_id}}",
+          "save_as_pdf": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Configuration Fields
+
+**label**: Gmail label to filter emails (e.g., "INBOX" or custom labels).
+**subject_filter**: A string to filter emails by subject.
+**download_attachment**: Whether to download attachments (true/false).
+**mark_as_read**: Mark the email as read after processing (true/false).
+**delete_email**: Delete the email after processing (true/false).
+**save_to**: Directory to save downloaded files or PDFs.
+**pdf_password**: Password to decrypt PDFs (leave empty if not needed).
+**filename_pattern**: Pattern for naming files (supports {date} and {email_id} placeholders).
+**save_as_pdf**: Save the email content as a PDF (true/false).
+
+## Usage
+
+Set up the environment variables:
+
+```bash
+export GMAIL_CREDENTIALS_JSON=/path/to/credentials.json
+export GMAIL_USER=your-email@gmail.com
+export GMAIL_ACTION_CONFIG=/path/to/config.json
+```
+
+Run the tool:
+
+```bash
+./gmail-tool
+```
+
+## OAuth Scopes
+
+The tool dynamically selects the Gmail API scopes based on the actions specified in the configuration:
+
+* Read-only: https://www.googleapis.com/auth/gmail.readonly (default).
+* Modify: https://www.googleapis.com/auth/gmail.modify (for marking as read).
+* Full Access: https://mail.google.com/ (for deleting emails).
+
