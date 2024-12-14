@@ -67,14 +67,14 @@ Note: The authentication scope required for doing changes to gmail requires app 
 Clone the repository:
 
 ```bash
-git clone <repository-url>
-cd <repository-directory>
+git clone https://github.com/bhargavakumark/gmail-download
+cd gmail-download
 ```
 
 Build the executable:
 
 ```bash
-go build -o gmail-tool main.go
+go build -o gmail-downlaod
 ```
 
 ## Configuration
@@ -105,15 +105,15 @@ Create a JSON configuration file (e.g., config.json) to define actions for speci
 
 ### Configuration Fields
 
-**label**: Gmail label to filter emails (e.g., "INBOX" or custom labels).
-**subject_filter**: A string to filter emails by subject.
-**download_attachment**: Whether to download attachments (true/false).
-**mark_as_read**: Mark the email as read after processing (true/false).
-**delete_email**: Delete the email after processing (true/false).
-**save_to**: Directory to save downloaded files or PDFs.
-**pdf_password**: Password to decrypt PDFs (leave empty if not needed).
-**filename_pattern**: Pattern for naming files (supports {date} and {email_id} placeholders).
-**save_as_pdf**: Save the email content as a PDF (true/false).
+* **label**: Gmail label to filter emails (e.g., "INBOX" or custom labels).
+* **subject_filter**: A string to filter emails by subject.
+* **download_attachment**: Whether to download attachments (true/false).
+* **mark_as_read**: Mark the email as read after processing (true/false).
+* **delete_email**: Delete the email after processing (true/false).
+* **save_to**: Directory to save downloaded files or PDFs.
+* **pdf_password**: Password to decrypt PDFs (leave empty if not needed).
+* **filename_pattern**: Pattern for naming files (supports {date} and {email_id} placeholders).
+* **save_as_pdf**: Save the email content as a PDF (true/false).
 
 ## Usage
 
@@ -128,7 +128,7 @@ export GMAIL_ACTION_CONFIG=/path/to/config.json
 Run the tool:
 
 ```bash
-./gmail-tool
+./gmail-download
 ```
 
 ## OAuth Scopes
