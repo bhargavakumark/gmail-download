@@ -36,3 +36,4 @@ Once authorizaiton you will be redirected to a URL like `http://localhost` whith
 
 The code you need to copy/paste into your terminal is in the URL. \&code=<long-code-is-here-copy-this>=https://. Copy this code and paste as input to the this program. It will save the token as `token.json` locally. Next time you run the program, you aren't prompted for authorization.
 
+Note: The authentication scope required for doing changes to gmail requires app to be verified as per https://developers.google.com/gmail/api/auth/scopes#scopes.
