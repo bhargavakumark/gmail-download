@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jung-kurt/gofpdf"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
 	"google.golang.org/api/gmail/v1"
@@ -21,11 +22,41 @@ type Action struct {
 	SaveTo          string `json:"save_to"`
 	PdfPassword     string `json:"pdf_password"`
 	FilenamePattern string `json:"filename_pattern"`
+	SaveAsPdf       bool   `json:"save_as_pdf"`
 }
 
 type LabelAction struct {
 	Label   string   `json:"label"`
 	Actions []Action `json:"actions"`
+}
+
+// saveEmailAsPDF saves the email content as a PDF file.
+func saveEmailAsPDF(emailID, emailDate, subject, body, saveDir string) error {
+	if _, err := os.Stat(saveDir); os.IsNotExist(err) {
+		return fmt.Errorf("save directory does not exist: %s", saveDir)
+	}
+
+	filename := fmt.Sprintf("%s/email_%s_%s.pdf", saveDir, emailDate, emailID)
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.SetFont("Arial", "", 12)
+	pdf.AddPage()
+
+	pdf.CellFormat(0, 10, fmt.Sprintf("Email ID: %s", emailID), "", 1, "L", false, 0, "")
+	pdf.CellFormat(0, 10, fmt.Sprintf("Date: %s", emailDate), "", 1, "L", false, 0, "")
+	pdf.CellFormat(0, 10, fmt.Sprintf("Subject: %s", subject), "", 1, "L", false, 0, "")
+
+	// Add a line break
+	pdf.Ln(10)
+
+	pdf.MultiCell(0, 10, body, "", "L", false)
+
+	err := pdf.OutputFileAndClose(filename)
+	if err != nil {
+		return fmt.Errorf("failed to save PDF: %v", err)
+	}
+
+	log.Printf("Saved email as PDF: %s", filename)
+	return nil
 }
 
 func formatFilename(pattern, originalFilename, emailDate string) string {
@@ -135,6 +166,39 @@ func processEmails(service *gmail.Service, userID string, labelAction LabelActio
 					}
 				}
 
+				if action.SaveAsPdf {
+					emailDate := "unknown"
+					for _, header := range m.Payload.Headers {
+						if header.Name == "Date" {
+							emailDate = parseEmailDate(header.Value)
+							break
+						}
+					}
+
+					// Extract subject
+					subject := "No Subject"
+					for _, header := range m.Payload.Headers {
+						if header.Name == "Subject" {
+							subject = header.Value
+							break
+						}
+					}
+
+					// Extract body
+					body := ""
+					if m.Payload.Body != nil && m.Payload.Body.Data != "" {
+						data, err := base64.URLEncoding.DecodeString(m.Payload.Body.Data)
+						if err == nil {
+							body = string(data)
+						}
+
+						err = saveEmailAsPDF(msg.Id, emailDate, subject, body, action.SaveTo)
+						if err != nil {
+							log.Printf("Failed to save email as PDF: %v", err)
+						}
+					}
+				}
+
 				if action.MarkAsRead {
 					_, err := service.Users.Messages.Modify(userID, msg.Id, &gmail.ModifyMessageRequest{
 						RemoveLabelIds: []string{"UNREAD"},
@@ -150,6 +214,7 @@ func processEmails(service *gmail.Service, userID string, labelAction LabelActio
 						log.Printf("Failed to delete email: %v", err)
 					}
 				}
+
 			}
 
 			nextPageToken = msgs.NextPageToken

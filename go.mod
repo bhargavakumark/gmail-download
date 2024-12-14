@@ -20,6 +20,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.0 // indirect
 	github.com/hhrutter/lzw v1.0.0 // indirect
 	github.com/hhrutter/tiff v1.0.1 // indirect
+	github.com/jung-kurt/gofpdf v1.16.2 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/pdfcpu/pdfcpu v0.9.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
