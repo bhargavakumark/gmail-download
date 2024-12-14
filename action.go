@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
@@ -12,17 +14,45 @@ import (
 )
 
 type Action struct {
-	SubjectFilter string `json:"subject_filter"`
-	Download      bool   `json:"download_attachment"`
-	MarkAsRead    bool   `json:"mark_as_read"`
-	Delete        bool   `json:"delete_email"`
-	SaveTo        string `json:"save_to"`
-	PdfPassword   string `json:"pdf_password"`
+	SubjectFilter   string `json:"subject_filter"`
+	Download        bool   `json:"download_attachment"`
+	MarkAsRead      bool   `json:"mark_as_read"`
+	Delete          bool   `json:"delete_email"`
+	SaveTo          string `json:"save_to"`
+	PdfPassword     string `json:"pdf_password"`
+	FilenamePattern string `json:"filename_pattern"`
 }
 
 type LabelAction struct {
 	Label   string   `json:"label"`
 	Actions []Action `json:"actions"`
+}
+
+func formatFilename(pattern, originalFilename, emailDate string) string {
+	// Replace placeholders in the pattern with actual values
+	formatted := strings.ReplaceAll(pattern, "{original}", originalFilename)
+	formatted = strings.ReplaceAll(formatted, "{date}", emailDate)
+	return formatted
+}
+
+func parseEmailDate(dateStr string) string {
+	// Define possible layouts for parsing email date
+	layouts := []string{
+		time.RFC1123Z,                    // Example: Mon, 02 Jan 2006 15:04:05 -0700
+		time.RFC1123,                     // Example: Mon, 02 Jan 2006 15:04:05 MST
+		"Mon, 2 Jan 2006 15:04:05 -0700", // Single-digit day
+		"2 Jan 2006 15:04:05 -0700",      // No weekday
+	}
+
+	for _, layout := range layouts {
+		if parsedTime, err := time.Parse(layout, dateStr); err == nil {
+			return parsedTime.Format("2006-01-02_15-04-05")
+		}
+	}
+
+	// Return "unknown" if parsing fails for all layouts
+	log.Printf("ERROR: Failed to parse email date: %s", dateStr)
+	return "unknown"
 }
 
 func processEmails(service *gmail.Service, userID string, labelAction LabelAction) {
@@ -42,6 +72,15 @@ func processEmails(service *gmail.Service, userID string, labelAction LabelActio
 				if err != nil {
 					log.Printf("Unable to retrieve message: %v", err)
 					continue
+				}
+
+				// Parse email date/time
+				emailDate := "unknown"
+				for _, header := range m.Payload.Headers {
+					if header.Name == "Date" {
+						emailDate = parseEmailDate(header.Value)
+						break
+					}
 				}
 
 				if action.Download {
@@ -70,7 +109,13 @@ func processEmails(service *gmail.Service, userID string, labelAction LabelActio
 							log.Fatalf("SaveTo directory does not exist: %s", dir)
 						}
 
-						filePath := fmt.Sprintf("%s/%s", dir, part.Filename)
+						// Apply filename pattern
+						filename := part.Filename
+						if action.FilenamePattern != "" {
+							filename = formatFilename(action.FilenamePattern, part.Filename, emailDate)
+						}
+
+						filePath := fmt.Sprintf("%s/%s", dir, filename)
 						if err := os.WriteFile(filePath, data, 0644); err != nil {
 							log.Printf("Failed to save attachment: %v", err)
 							continue
