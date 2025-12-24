@@ -33,7 +33,7 @@ func getClient(config *oauth2.Config) *http.Client {
 // Starts a local server to automatically capture the OAuth redirect.
 func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 	// Set redirect URI to localhost
-	redirectURL := "http://localhost:9900/callback"
+	redirectURL := "http://localhost:9901/callback"
 	config.RedirectURL = redirectURL
 
 	// Channel to receive the authorization code
@@ -41,7 +41,7 @@ func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 	errorChan := make(chan error, 1)
 
 	// Start local server to handle OAuth callback
-	listener, err := net.Listen("tcp", ":9900")
+	listener, err := net.Listen("tcp", ":9901")
 	if err != nil {
 		log.Fatalf("Unable to start local server: %v", err)
 	}
